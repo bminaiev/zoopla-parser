@@ -9,6 +9,8 @@ const val CACHE_DIR = "responses-cache/"
 
 const val LISTINGS_CLASS = ".listing-results-price"
 const val PRICE_CLASS = ".ui-pricing__main-price"
+const val FLOOR_CLASS = ".ui-modal-floorplan__wrap"
+const val GALERY_CLASS = ".ui-modal-gallery__asset--center-content"
 
 fun makeGoodFilename(filename: String): String {
     return filename.replace("[^a-zA-Z0-9.\\-]".toRegex(), "_")
@@ -51,7 +53,7 @@ fun parseMonthPrice(s: String): Int? {
     return s.substring(1).replace(",", "").split(' ').first().toInt()
 }
 
-fun handleResponse(response: String) {
+fun handleResponse(response: String, telegram: Telegram) {
     val properties = Jsoup.parse(response).select(LISTINGS_CLASS)
 
     val links = properties.map {
@@ -60,40 +62,51 @@ fun handleResponse(response: String) {
 
     println("total " + links.size + " properties!")
 
-    val firstLink = buildLink(links[0])
+    val allProperies = ArrayList<Property>()
 
     links.forEach { linkIt ->
         val link = buildLink(linkIt)
         System.err.println("Send query $link")
         val propertyId = getIdFromLink(link)
-        val property = sendQuery(link)
-        val priceStr = Jsoup.parse(property).selectFirst(PRICE_CLASS).text()
-        val pricePoundsPerMonth = parseMonthPrice(priceStr)
+        val propertyHTML = sendQuery(link)
+        val parsedHTML = Jsoup.parse(propertyHTML)
+        val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
+        val pricePoundsPerMonth = parseMonthPrice(priceStr) ?: 0
+        val floor = parsedHTML.selectFirst(FLOOR_CLASS)?.selectFirst(GALERY_CLASS)?.attr("style")
+        val regex = "background-image: url\\('(.*)'\\)".toRegex()
+        if (floor != null) {
+            val (floorPlanImage) = regex.find(floor)!!.destructured
+            System.err.println("price (pounds / month) = $pricePoundsPerMonth")
 
-        System.err.println("price (pounds / month) = $pricePoundsPerMonth")
-
-        val photosPage = sendQuery(getPhotosLink(propertyId))
-        if (photosPage != null) {
-            val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
-                !it.attr("style").isEmpty()
-            }.map { it.attr("src") }
+            val photosPage = sendQuery(getPhotosLink(propertyId))
+            if (photosPage != null) {
+                val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
+                    !it.attr("style").isEmpty()
+                }.map { it.attr("src") }
+                val property = Property(link, photos.toTypedArray(), pricePoundsPerMonth, floorPlanImage)
+                allProperies.add(property)
+            }
         }
-
-
     }
 
-    println(firstLink)
+    println(allProperies.size)
 
-
+    for (i in 6..8) {
+        System.err.println("SEND PROPERTY?")
+        telegram.sendProperty(allProperies[i])
+        System.err.println("FINISH!")
+    }
 }
 
-fun sendRequest() {
-    val url = BASE_ADDRESS + "/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100"
+fun sendRequest(telegram: Telegram) {
+    val url =
+        BASE_ADDRESS + "/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100"
     val response = sendQuery(url)!!
-    handleResponse(response)
+    handleResponse(response, telegram)
 }
 
 fun main(args: Array<String>) {
+    val telegram = Telegram(args[0], args[1].toInt())
     println("Start!")
-    sendRequest()
+    sendRequest(telegram)
 }
