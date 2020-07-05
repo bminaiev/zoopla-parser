@@ -11,6 +11,8 @@ const val LISTINGS_CLASS = ".listing-results-price"
 const val PRICE_CLASS = ".ui-pricing__main-price"
 const val FLOOR_CLASS = ".ui-modal-floorplan__wrap"
 const val GALERY_CLASS = ".ui-modal-gallery__asset--center-content"
+const val SUMMARY_CLASS = ".dp-sidebar-wrapper__summary"
+const val ADDRESS_CLASS = ".ui-property-summary__address"
 
 fun makeGoodFilename(filename: String): String {
     return filename.replace("[^a-zA-Z0-9.\\-]".toRegex(), "_")
@@ -72,6 +74,8 @@ fun handleResponse(response: String, telegram: Telegram) {
         val parsedHTML = Jsoup.parse(propertyHTML)
         val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
         val pricePoundsPerMonth = parseMonthPrice(priceStr) ?: 0
+        val address = parsedHTML.select(SUMMARY_CLASS).select(ADDRESS_CLASS).text()
+        System.err.println("address: $address")
         val floor = parsedHTML.selectFirst(FLOOR_CLASS)?.selectFirst(GALERY_CLASS)?.attr("style")
         val regex = "background-image: url\\('(.*)'\\)".toRegex()
         if (floor != null) {
@@ -83,7 +87,7 @@ fun handleResponse(response: String, telegram: Telegram) {
                 val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
                     !it.attr("style").isEmpty()
                 }.map { it.attr("src") }
-                val property = Property(link, photos.toTypedArray(), pricePoundsPerMonth, floorPlanImage)
+                val property = Property(link, photos.toTypedArray(), pricePoundsPerMonth, floorPlanImage, address)
                 allProperies.add(property)
             }
         }
@@ -91,7 +95,7 @@ fun handleResponse(response: String, telegram: Telegram) {
 
     println(allProperies.size)
 
-    for (i in 6..8) {
+    for (i in 0..4) {
         System.err.println("SEND PROPERTY?")
         telegram.sendProperty(allProperies[i])
         System.err.println("FINISH!")
