@@ -1,9 +1,9 @@
 data class Property(
     val link: String,
     val imgs: Array<String>,
-    val costPerMonth: Int,
+    val costPerMonth: RentCost,
     val floorPlanImage: String,
-    val address: String
+    val address: Address
 ) {
 
 }

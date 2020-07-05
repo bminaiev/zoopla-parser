@@ -4,6 +4,7 @@ class Telegram(token: String, val userId: Int) {
     val bot = Bot.createPolling(username = "londonrent", token = token)
 
     val MAX_PHOTOS = 10
+    val DELIMITER_MESSAGE = "------------------------------"
 
     private fun joinImages(firstImage: String, other: Array<String>): Array<String> {
         val res = other.toMutableList()
@@ -12,11 +13,12 @@ class Telegram(token: String, val userId: Int) {
     }
 
     fun sendProperty(property: Property) {
-        val hasExtraPhotos = if (property.imgs.size > MAX_PHOTOS) "\n(more photos available)" else ""
+        val hasExtraPhotos = if (property.imgs.size > MAX_PHOTOS) "(more photos available)\n" else ""
         val message =
-            property.costPerMonth.toString() + " £\n" + property.address + "\n" + property.link + hasExtraPhotos
+            property.costPerMonth.toString() + property.link + "\n" + property.address + hasExtraPhotos
         val imgs = joinImages(property.floorPlanImage, property.imgs).take(MAX_PHOTOS).map { bot.mediaPhoto(it) }
         System.err.println("total imsgs: " + imgs.size + ": " + imgs)
+        bot.sendMessage(userId, DELIMITER_MESSAGE).join()
         bot.sendMediaGroup(userId, imgs).join()
         bot.sendMessage(userId, message).join()
     }

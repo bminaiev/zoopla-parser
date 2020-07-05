@@ -73,8 +73,8 @@ fun handleResponse(response: String, telegram: Telegram) {
         val propertyHTML = sendQuery(link)
         val parsedHTML = Jsoup.parse(propertyHTML)
         val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
-        val pricePoundsPerMonth = parseMonthPrice(priceStr) ?: 0
-        val address = parsedHTML.select(SUMMARY_CLASS).select(ADDRESS_CLASS).text()
+        val pricePoundsPerMonth = RentCost(priceStr)
+        val address = Address(parsedHTML.select(SUMMARY_CLASS).select(ADDRESS_CLASS).text())
         System.err.println("address: $address")
         val floor = parsedHTML.selectFirst(FLOOR_CLASS)?.selectFirst(GALERY_CLASS)?.attr("style")
         val regex = "background-image: url\\('(.*)'\\)".toRegex()
