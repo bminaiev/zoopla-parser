@@ -1,7 +1,7 @@
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jsoup.Jsoup
 import java.io.File
@@ -64,7 +64,7 @@ object seen_properties : Table() {
     val id = integer("id")
 }
 
-fun handleResponse(response: String, telegram: Telegram) {
+fun handleResponse(response: String, telegram: Telegram, config: Config) {
     val properties = Jsoup.parse(response).select(LISTINGS_CLASS)
 
     val links = properties.map {
@@ -84,7 +84,6 @@ fun handleResponse(response: String, telegram: Telegram) {
         val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
         val pricePoundsPerMonth = RentCost(priceStr)
         val address = Address(parsedHTML.select(SUMMARY_CLASS).select(ADDRESS_CLASS).text())
-        System.err.println("address: $address")
         val floor = parsedHTML.selectFirst(FLOOR_CLASS)?.selectFirst(GALERY_CLASS)?.attr("style")
         val regex = "background-image: url\\('(.*)'\\)".toRegex()
         if (floor != null) {
@@ -96,7 +95,8 @@ fun handleResponse(response: String, telegram: Telegram) {
                 val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
                     !it.attr("style").isEmpty()
                 }.map { it.attr("src") }
-                val property = Property(link, photos.toTypedArray(), pricePoundsPerMonth, floorPlanImage, address)
+                val property =
+                    Property(link, photos.toTypedArray(), pricePoundsPerMonth, floorPlanImage, address, propertyId)
                 allProperies.add(property)
             }
         }
@@ -104,39 +104,37 @@ fun handleResponse(response: String, telegram: Telegram) {
 
     println(allProperies.size)
 
-//    for (i in 0..0) {
-//        System.err.println("SEND PROPERTY?")
-//        telegram.sendProperty(allProperies[i])
-//        System.err.println("FINISH!")
-//    }
-}
-
-fun sendRequest(telegram: Telegram) {
-    val url =
-        BASE_ADDRESS + "/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100"
-    val response = sendQuery(url)!!
-    handleResponse(response, telegram)
-}
-
-fun testDB(config: Config) {
-
     Database.connect(
         config.dbURL, driver = "org.postgresql.Driver",
         user = config.dbUser, password = config.dbPassword
     )
 
-    val seenIds = transaction {
-        seen_properties.insert { it[id] = 555 }
-        seen_properties.selectAll().toList()
+    // TODO: remove take!
+    allProperies.take(5).forEach { property ->
+        val propertyId = property.id
+        transaction {
+            val inDB = seen_properties.select { seen_properties.id eq propertyId }.toList()
+            if (inDB.isEmpty()) {
+                System.err.println("Want to send $property\n")
+                telegram.sendProperty(property)
+                seen_properties.insert { it[id] = propertyId }
+            } else {
+                System.err.println("Skip sending $propertyId\n")
+            }
+        }
     }
-    System.err.println("SEEN IDS = $seenIds")
+}
 
+fun sendRequest(telegram: Telegram, config: Config) {
+    val url =
+        BASE_ADDRESS + "/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100"
+    val response = sendQuery(url, useCache = false)!!
+    handleResponse(response, telegram, config)
 }
 
 fun main(args: Array<String>) {
     val config = Config.parseFromFile(args[0])
-    testDB(config)
-//    val telegram = Telegram(args[0], args[1].toInt())
-//    println("Start!")
-//    sendRequest(telegram)
+    val telegram = Telegram(config.telegramAPIKey, config.telegramUserId)
+    println("Start!")
+    sendRequest(telegram, config)
 }

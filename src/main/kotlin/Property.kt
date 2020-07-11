@@ -3,7 +3,8 @@ data class Property(
     val imgs: Array<String>,
     val costPerMonth: RentCost,
     val floorPlanImage: String,
-    val address: Address
+    val address: Address,
+    val id: Int
 ) {
 
 }
