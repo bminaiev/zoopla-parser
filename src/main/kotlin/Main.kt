@@ -1,3 +1,8 @@
+import org.jetbrains.exposed.sql.Database
+import org.jetbrains.exposed.sql.Table
+import org.jetbrains.exposed.sql.insert
+import org.jetbrains.exposed.sql.selectAll
+import org.jetbrains.exposed.sql.transactions.transaction
 import org.jsoup.Jsoup
 import java.io.File
 import java.io.IOException
@@ -55,6 +60,10 @@ fun parseMonthPrice(s: String): Int? {
     return s.substring(1).replace(",", "").split(' ').first().toInt()
 }
 
+object seen_properties : Table() {
+    val id = integer("id")
+}
+
 fun handleResponse(response: String, telegram: Telegram) {
     val properties = Jsoup.parse(response).select(LISTINGS_CLASS)
 
@@ -95,11 +104,11 @@ fun handleResponse(response: String, telegram: Telegram) {
 
     println(allProperies.size)
 
-    for (i in 0..4) {
-        System.err.println("SEND PROPERTY?")
-        telegram.sendProperty(allProperies[i])
-        System.err.println("FINISH!")
-    }
+//    for (i in 0..0) {
+//        System.err.println("SEND PROPERTY?")
+//        telegram.sendProperty(allProperies[i])
+//        System.err.println("FINISH!")
+//    }
 }
 
 fun sendRequest(telegram: Telegram) {
@@ -109,8 +118,25 @@ fun sendRequest(telegram: Telegram) {
     handleResponse(response, telegram)
 }
 
+fun testDB(config: Config) {
+
+    Database.connect(
+        config.dbURL, driver = "org.postgresql.Driver",
+        user = config.dbUser, password = config.dbPassword
+    )
+
+    val seenIds = transaction {
+        seen_properties.insert { it[id] = 555 }
+        seen_properties.selectAll().toList()
+    }
+    System.err.println("SEEN IDS = $seenIds")
+
+}
+
 fun main(args: Array<String>) {
-    val telegram = Telegram(args[0], args[1].toInt())
-    println("Start!")
-    sendRequest(telegram)
+    val config = Config.parseFromFile(args[0])
+    testDB(config)
+//    val telegram = Telegram(args[0], args[1].toInt())
+//    println("Start!")
+//    sendRequest(telegram)
 }

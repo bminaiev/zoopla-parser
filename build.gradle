@@ -1,6 +1,7 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.3.72'
     id 'application'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.3.70'
 }
 
 group 'org.example'
@@ -8,6 +9,7 @@ version '1.0-SNAPSHOT'
 
 repositories {
     mavenCentral()
+    jcenter()
     maven { url "https://jitpack.io" }
 }
 
@@ -15,6 +17,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     compile 'org.jsoup:jsoup:1.13.1'
     implementation "com.github.elbekD:kt-telegram-bot:1.3.4"
+    compile 'org.jetbrains.exposed:exposed-core:0.24.1'
+    compile 'org.jetbrains.exposed:exposed-dao:0.24.1'
+    compile 'org.jetbrains.exposed:exposed-jdbc:0.24.1'
+    compile 'org.postgresql:postgresql:42.2.2'
+    implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0"
 }
 
 compileKotlin {
@@ -25,6 +32,6 @@ compileTestKotlin {
 }
 
 application {
-    mainClassName = 'BotKt'
+    mainClassName = 'MainKt'
 }
 
