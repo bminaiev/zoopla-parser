@@ -71,7 +71,7 @@ fun handleResponse(response: String, telegram: Telegram, config: Config) {
         it.attr("href")
     }
 
-    println("total " + links.size + " properties!")
+    Logger.println("total " + links.size + " properties!")
 
     val allProperies = ArrayList<Property>()
 
@@ -88,8 +88,6 @@ fun handleResponse(response: String, telegram: Telegram, config: Config) {
         val regex = "background-image: url\\('(.*)'\\)".toRegex()
         if (floor != null) {
             val (floorPlanImage) = regex.find(floor)!!.destructured
-            System.err.println("price (pounds / month) = $pricePoundsPerMonth")
-
             val photosPage = sendQuery(getPhotosLink(propertyId))
             if (photosPage != null) {
                 val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
@@ -102,24 +100,21 @@ fun handleResponse(response: String, telegram: Telegram, config: Config) {
         }
     }
 
-    println(allProperies.size)
-
     Database.connect(
         config.dbURL, driver = "org.postgresql.Driver",
         user = config.dbUser, password = config.dbPassword
     )
 
-    // TODO: remove take!
-    allProperies.take(5).forEach { property ->
+    allProperies.forEach { property ->
         val propertyId = property.id
         transaction {
             val inDB = seen_properties.select { seen_properties.id eq propertyId }.toList()
             if (inDB.isEmpty()) {
-                System.err.println("Want to send $property\n")
+                Logger.println("Want to send $property\n")
                 telegram.sendProperty(property)
                 seen_properties.insert { it[id] = propertyId }
             } else {
-                System.err.println("Skip sending $propertyId\n")
+                Logger.println("Skip sending $propertyId\n")
             }
         }
     }
@@ -135,6 +130,6 @@ fun sendRequest(telegram: Telegram, config: Config) {
 fun main(args: Array<String>) {
     val config = Config.parseFromFile(args[0])
     val telegram = Telegram(config.telegramAPIKey, config.telegramUserId)
-    println("Start!")
+    Logger.println("Start!")
     sendRequest(telegram, config)
 }
