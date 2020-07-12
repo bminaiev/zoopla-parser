@@ -4,7 +4,6 @@ data class Property(
     val costPerMonth: RentCost,
     val floorPlanImage: String,
     val address: Address,
-    val id: Int
-) {
-
-}
+    val id: Int,
+    val searchTag: QueryParams
+)

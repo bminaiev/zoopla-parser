@@ -5,7 +5,7 @@ import java.io.File
 
 @Serializable
 data class Config(
-    val telegramUserId: Int,
+    val telegramChatId: Long,
     val telegramAPIKey: String,
     val dbURL: String,
     val dbUser: String,
@@ -14,7 +14,7 @@ data class Config(
     companion object {
         fun parseFromFile(filename: String): Config {
             val json = Json(JsonConfiguration.Stable)
-            return json.parse(Config.serializer(), File(filename).readText())
+            return json.parse(serializer(), File(filename).readText())
         }
     }
 }
