@@ -1,4 +1,7 @@
 import com.elbekD.bot.Bot
+import com.elbekD.bot.http.TelegramApiError
+
+const val TIME_TO_SLEEP = 60 * 1000L
 
 class Telegram(token: String, val chatIds: Array<Long>) {
     val bot = Bot.createPolling(username = "londonrent", token = token)
@@ -14,6 +17,19 @@ class Telegram(token: String, val chatIds: Array<Long>) {
         return res.toTypedArray()
     }
 
+    private fun <R> tryTelegramAPIWithRetries(foo: () -> R): R {
+        for (it in 0..10) {
+            try {
+                return foo()
+            } catch (e: TelegramApiError) {
+                Logger.println("Got Telegram API error :( $e")
+                Logger.println("Going to sleep $TIME_TO_SLEEP ms");
+                Thread.sleep(TIME_TO_SLEEP)
+            }
+        }
+        throw AssertionError("Too much tries to send message")
+    }
+
     fun sendProperty(property: Property) {
         val hasExtraPhotos = if (property.imgs.size > MAX_PHOTOS) "(more photos available)\n" else ""
         val message =
@@ -24,9 +40,9 @@ class Telegram(token: String, val chatIds: Array<Long>) {
         ).take(MAX_PHOTOS) + directedByImg).map { bot.mediaPhoto(it) }
         Logger.println("total imsgs: " + imgs.size + ": " + imgs)
         chatIds.forEach { chatId ->
-            bot.sendMessage(chatId, DELIMITER_MESSAGE).join()
-            bot.sendMediaGroup(chatId, imgs).join()
-            bot.sendMessage(chatId, message, parseMode = "html").join()
+            tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE).join() }
+            tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs).join() }
+            tryTelegramAPIWithRetries { bot.sendMessage(chatId, message, parseMode = "html").join() }
         }
     }
 }
