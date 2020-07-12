@@ -163,7 +163,7 @@ fun main(args: Array<String>) {
 //    testParseProperty()
 //    testmd5()
     val config = Config.parseFromFile(args[0])
-    val telegram = Telegram(config.telegramAPIKey, config.telegramChatId)
+    val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
     Logger.println("Start!")
     sendRequest(telegram, config)
 }

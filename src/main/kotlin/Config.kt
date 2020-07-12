@@ -5,7 +5,7 @@ import java.io.File
 
 @Serializable
 data class Config(
-    val telegramChatId: Long,
+    val telegramChatIds: Array<Long>,
     val telegramAPIKey: String,
     val dbURL: String,
     val dbUser: String,

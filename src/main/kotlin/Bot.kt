@@ -1,6 +1,6 @@
 import com.elbekD.bot.Bot
 
-class Telegram(token: String, val chatId: Long) {
+class Telegram(token: String, val chatIds: Array<Long>) {
     val bot = Bot.createPolling(username = "londonrent", token = token)
 
     val MAX_PHOTOS = 9
@@ -23,9 +23,11 @@ class Telegram(token: String, val chatId: Long) {
             property.imgs
         ).take(MAX_PHOTOS) + directedByImg).map { bot.mediaPhoto(it) }
         Logger.println("total imsgs: " + imgs.size + ": " + imgs)
-        bot.sendMessage(chatId, DELIMITER_MESSAGE).join()
-        bot.sendMediaGroup(chatId, imgs).join()
-        bot.sendMessage(chatId, message, parseMode = "html").join()
+        chatIds.forEach { chatId ->
+            bot.sendMessage(chatId, DELIMITER_MESSAGE).join()
+            bot.sendMediaGroup(chatId, imgs).join()
+            bot.sendMessage(chatId, message, parseMode = "html").join()
+        }
     }
 }
 
