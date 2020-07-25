@@ -76,6 +76,10 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams): Property? {
     val parsedHTML = Jsoup.parse(propertyHTML)
     val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
     val pricePoundsPerMonth = RentCost(priceStr)
+    if (pricePoundsPerMonth.isOutOfRange()) {
+        Logger.println("Skip property because of price $pricePoundsPerMonth")
+        return null
+    }
     val address = Address(parsedHTML.select(SUMMARY_CLASS).select(ADDRESS_CLASS).text())
     val floor = parsedHTML.selectFirst(FLOOR_CLASS)?.selectFirst(GALERY_CLASS)?.attr("style")
     if (floor == null) {
@@ -130,19 +134,20 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 }
 
 fun sendRequest(telegram: Telegram, config: Config) {
+    val additionalParams = "&beds_max=2"
     val queryParamsNear = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100",
+        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100$additionalParams",
         "near Farringdon"
     )
     val queryParamsKingsCross = QueryParams(
-        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Kings%20Cross%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Kings%20Cross%2C%20London&radius=1&results_sort=newest_listings&search_source=refine$additionalParams",
         "near Kings Cross"
     )
     val queryParamsFacebook = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine$additionalParams",
         "near FB office"
     )
-    val allQueryParams = listOf(queryParamsNear, queryParamsKingsCross, queryParamsFacebook)
+    val allQueryParams = listOf(queryParamsNear)
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
         val response = sendQuery(it.baseUrl, useCache = false)!!
