@@ -1,5 +1,7 @@
 import com.elbekD.bot.Bot
 import com.elbekD.bot.http.TelegramApiError
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CompletionException
 
 const val TIME_TO_SLEEP = 60 * 1000L
 
@@ -17,12 +19,24 @@ class Telegram(token: String, val chatIds: Array<Long>) {
         return res.toTypedArray()
     }
 
-    private fun <R> tryTelegramAPIWithRetries(foo: () -> R): R {
-        for (it in 0..10) {
+    private fun <R> tryTelegramAPIWithRetries(foo: () -> CompletableFuture<R>) {
+        for (it in 0..5) {
             try {
-                return foo()
+                val fooRes = foo()
+                fooRes.join()
+                return
             } catch (e: TelegramApiError) {
+                Logger.println("Got Telegram API error (strange?) :( $e")
+                Logger.println("Going to sleep (strange?) $TIME_TO_SLEEP ms");
+                Thread.sleep(TIME_TO_SLEEP)
+            } catch (e: CompletionException) {
                 Logger.println("Got Telegram API error :( $e")
+                if (e.message?.contains("Bad Request: wrong type of the web page content")!!) {
+                    return
+                }
+                if (e.message?.contains("Bad Request: group send failed")!!) {
+                    return
+                }
                 Logger.println("Going to sleep $TIME_TO_SLEEP ms");
                 Thread.sleep(TIME_TO_SLEEP)
             }
@@ -40,9 +54,9 @@ class Telegram(token: String, val chatIds: Array<Long>) {
         ).take(MAX_PHOTOS) + directedByImg).map { bot.mediaPhoto(it) }
         Logger.println("total imsgs: " + imgs.size + ": " + imgs)
         chatIds.forEach { chatId ->
-            tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE).join() }
-            tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs).join() }
-            tryTelegramAPIWithRetries { bot.sendMessage(chatId, message, parseMode = "html").join() }
+            tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE) }
+            tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs) }
+            tryTelegramAPIWithRetries { bot.sendMessage(chatId, message, parseMode = "html") }
         }
     }
 }
