@@ -47,7 +47,8 @@ class Telegram(token: String, val chatIds: Array<Long>) {
     fun sendProperty(property: Property) {
         val hasExtraPhotos = if (property.imgs.size > MAX_PHOTOS) "(more photos available)\n" else ""
         val message =
-            property.costPerMonth.toString() + property.link + "\n" + property.address + property.searchTag + hasExtraPhotos
+            property.costPerMonth.toString() + property.link + "\n" + property.address + property.searchTag +
+                    FloorPlanOCR.convertToString(property.areaSqM) + hasExtraPhotos
         val imgs = (joinImages(
             property.floorPlanImage,
             property.imgs

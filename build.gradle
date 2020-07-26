@@ -23,6 +23,7 @@ dependencies {
     compile 'org.postgresql:postgresql:42.2.2'
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0"
     compile 'org.slf4j:slf4j-simple:1.6.1'
+    implementation 'org.bytedeco.javacpp-presets:tesseract-platform:4.0.0-1.4.4'
 }
 
 compileKotlin {

@@ -9,7 +9,8 @@ data class Config(
     val telegramAPIKey: String,
     val dbURL: String,
     val dbUser: String,
-    val dbPassword: String
+    val dbPassword: String,
+    val tesseractPathData: String
 ) {
     companion object {
         fun parseFromFile(filename: String): Config {

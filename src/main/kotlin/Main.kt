@@ -70,7 +70,7 @@ fun buildPropertyLink(id: Int): String {
     return "https://www.zoopla.co.uk/to-rent/details/$id"
 }
 
-fun convertOneProperty(propertyId: Int, queryParams: QueryParams): Property? {
+fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config): Property? {
     val link = buildPropertyLink(propertyId)
     val propertyHTML = sendQuery(link)
     val parsedHTML = Jsoup.parse(propertyHTML)
@@ -88,6 +88,7 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams): Property? {
     }
     val regex = "background-image: url\\('(.*)'\\)".toRegex()
     val (floorPlanImage) = regex.find(floor)!!.destructured
+    val areaSqM = FloorPlanOCR.loadImageAndParseSqM(config, URL(floorPlanImage))
     val photosPage = sendQuery(getPhotosLink(propertyId))
     if (photosPage == null) {
         Logger.println("Skip property because can't get photos")
@@ -96,7 +97,16 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams): Property? {
     val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
         it.attr("style").isNotEmpty()
     }.map { it.attr("src") }
-    return Property(link, photos.toTypedArray(), pricePoundsPerMonth, floorPlanImage, address, propertyId, queryParams)
+    return Property(
+        link,
+        photos.toTypedArray(),
+        pricePoundsPerMonth,
+        floorPlanImage,
+        address,
+        propertyId,
+        queryParams,
+        areaSqM
+    )
 }
 
 fun handleResponse(response: String, telegram: Telegram, config: Config, queryParams: QueryParams) {
@@ -110,7 +120,7 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 
     val allProperties = links.mapNotNull { linkIt ->
         val propertyId = getIdFromLink(linkIt)
-        convertOneProperty(propertyId, queryParams)
+        convertOneProperty(propertyId, queryParams, config)
     }
 
     Database.connect(
@@ -153,11 +163,6 @@ fun sendRequest(telegram: Telegram, config: Config) {
         val response = sendQuery(it.baseUrl, useCache = false)!!
         handleResponse(response, telegram, config, it)
     }
-}
-
-fun testParseProperty() {
-    val property = convertOneProperty(55483994, QueryParams.EMPTY)
-    Logger.println(property.toString())
 }
 
 fun testmd5() {
