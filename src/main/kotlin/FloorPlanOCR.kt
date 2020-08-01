@@ -105,13 +105,17 @@ class FloorPlanOCR {
             if (area == null) {
                 return "???"
             } else {
-                return String.format("%.3f sq. m.", area)
+                return String.format("%.1f sq. m.", area)
             }
         }
 
         fun convertToString(area: Double?): String {
             val res = toString(area)
             return "area: $res\n"
+        }
+
+        fun tooSmallArea(areaSqM: Double?): Boolean {
+            return areaSqM == null || areaSqM <= 55.0
         }
     }
 

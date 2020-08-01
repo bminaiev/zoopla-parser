@@ -94,6 +94,9 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config
         Logger.println("Skip property because can't get photos")
         return null
     }
+    if (FloorPlanOCR.tooSmallArea(areaSqM)) {
+        Logger.println("Skip property because area is too small: $areaSqM")
+    }
     val photos = Jsoup.parse(photosPage).getElementsByTag("img").filter {
         it.attr("style").isNotEmpty()
     }.map { it.attr("src") }
