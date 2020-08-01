@@ -147,23 +147,27 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 }
 
 fun sendRequest(telegram: Telegram, config: Config) {
-    val additionalParams = "&beds_max=2"
+    val additionalParams = "&beds_max=1"
     val queryParamsNear = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100$additionalParams",
+        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100",
         "near Farringdon"
     )
+    val queryParamsAngel = QueryParams(
+        "$BASE_ADDRESS/to-rent/property/angel/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Angel%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        "near Angel"
+    )
     val queryParamsKingsCross = QueryParams(
-        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Kings%20Cross%2C%20London&radius=1&results_sort=newest_listings&search_source=refine$additionalParams",
+        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Kings%20Cross%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
         "near Kings Cross"
     )
     val queryParamsFacebook = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine$additionalParams",
+        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
         "near FB office"
     )
-    val allQueryParams = listOf(queryParamsNear)
+    val allQueryParams = listOf(queryParamsNear, queryParamsAngel)
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
-        val response = sendQuery(it.baseUrl, useCache = false)!!
+        val response = sendQuery(it.baseUrl + additionalParams, useCache = false)!!
         handleResponse(response, telegram, config, it)
     }
 }
