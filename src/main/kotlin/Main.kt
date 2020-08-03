@@ -165,7 +165,7 @@ fun sendRequest(telegram: Telegram, config: Config) {
         "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
         "near FB office"
     )
-    val allQueryParams = listOf(queryParamsNear, queryParamsAngel)
+    val allQueryParams = listOf(queryParamsNear, queryParamsAngel, queryParamsFacebook, queryParamsKingsCross)
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
         val response = sendQuery(it.baseUrl + additionalParams, useCache = false)!!
