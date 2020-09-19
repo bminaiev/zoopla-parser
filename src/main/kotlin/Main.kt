@@ -148,7 +148,7 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 }
 
 fun sendRequest(telegram: Telegram, config: Config) {
-    val additionalParams = "&beds_max=1"
+    val additionalParams = "&beds_max=2"
     val queryParamsNear = QueryParams(
         "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100",
         "near Farringdon"
@@ -169,8 +169,19 @@ fun sendRequest(telegram: Telegram, config: Config) {
         "$BASE_ADDRESS/to-rent/property/station/tube/hampstead/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Hampstead%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
         "hampstead"
     )
+    val queryNearHydePark = QueryParams(
+        "$BASE_ADDRESS/to-rent/property/station/tube/sloane-square/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Sloane%20Square%20Station%2C%20London&radius=3&results_sort=newest_listings&search_source=refine",
+        "hyde park"
+    )
     val allQueryParams =
-        listOf(queryParamsNear, queryParamsAngel, queryParamsFacebook, queryParamsKingsCross, queryParamsHampstead)
+        listOf(
+            queryParamsNear,
+            queryParamsAngel,
+            queryParamsFacebook,
+            queryParamsKingsCross,
+            queryParamsHampstead,
+            queryNearHydePark
+        )
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
         val response = sendQuery(it.baseUrl + additionalParams, useCache = false)!!
