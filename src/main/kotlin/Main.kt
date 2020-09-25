@@ -148,29 +148,30 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 }
 
 fun sendRequest(telegram: Telegram, config: Config) {
-    val additionalParams = "&beds_max=2"
+    val additionalParams =
+        "&beds_max=2&page_size=100&include_shared_accommodation=false&price_frequency=per_month&results_sort=newest_listings&search_source=refine&added=24_hours"
     val queryParamsNear = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&include_shared_accommodation=false&price_frequency=per_month&q=ec1m%205ny&radius=1&results_sort=newest_listings&search_source=home&page_size=100",
+        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&q=ec1m%205ny&radius=1",
         "near Farringdon"
     )
     val queryParamsAngel = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/angel/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Angel%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        "$BASE_ADDRESS/to-rent/property/angel/?q=Angel%2C%20London&radius=1",
         "near Angel"
     )
     val queryParamsKingsCross = QueryParams(
-        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Kings%20Cross%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?q=Kings%20Cross%2C%20London&radius=1",
         "near Kings Cross"
     )
     val queryParamsFacebook = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1",
         "near FB office"
     )
     val queryParamsHampstead = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/hampstead/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Hampstead%20Station%2C%20London&radius=1&results_sort=newest_listings&search_source=refine",
+        "$BASE_ADDRESS/to-rent/property/station/tube/hampstead/?q=Hampstead%20Station%2C%20London&radius=1",
         "hampstead"
     )
     val queryNearHydePark = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/sloane-square/?added=24_hours&include_shared_accommodation=false&page_size=100&price_frequency=per_month&q=Sloane%20Square%20Station%2C%20London&radius=3&results_sort=newest_listings&search_source=refine",
+        "$BASE_ADDRESS/to-rent/property/station/tube/sloane-square/?q=Sloane%20Square%20Station%2C%20London&radius=1",
         "hyde park"
     )
     val allQueryParams =
