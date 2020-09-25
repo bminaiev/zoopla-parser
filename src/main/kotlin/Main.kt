@@ -73,6 +73,10 @@ fun buildPropertyLink(id: Int): String {
 fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config): Property? {
     val link = buildPropertyLink(propertyId)
     val propertyHTML = sendQuery(link)
+    if (propertyHTML == null) {
+        Logger.println("Skip property, because can't download html")
+        return null
+    }
     val parsedHTML = Jsoup.parse(propertyHTML)
     val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
     val pricePoundsPerMonth = RentCost(priceStr)
@@ -151,7 +155,7 @@ fun sendRequest(telegram: Telegram, config: Config) {
     val additionalParams =
         "&beds_max=2&page_size=100&include_shared_accommodation=false&price_frequency=per_month&results_sort=newest_listings&search_source=refine&added=24_hours"
     val queryParamsNear = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?added=24_hours&q=ec1m%205ny&radius=1",
+        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?q=ec1m%205ny&radius=1",
         "near Farringdon"
     )
     val queryParamsAngel = QueryParams(
