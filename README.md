@@ -16,6 +16,15 @@ You need to create a config.txt which looks like this:
 }
 ```
 And also you need to create postresql database with some tables (TODO: write which one do you really need).
+```
+CREATE TABLE public.seen_properties (
+    id integer NOT NULL
+);
+CREATE TABLE public.seen_properties_right_move (
+    id integer NOT NULL
+);
+```
+
 Also you need to download eng tessdata (probably this one -- https://github.com/tesseract-ocr/tessdata/blob/master/eng.traineddata) 
 And maybe install some java/gradle stuff.
 
