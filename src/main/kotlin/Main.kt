@@ -1,54 +1,24 @@
+import kotlinx.serialization.UnstableDefault
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.Table
 import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jsoup.Jsoup
-import java.io.File
-import java.io.IOException
-import java.math.BigInteger
 import java.net.URL
-import java.security.MessageDigest
 
 const val BASE_ADDRESS = "https://www.zoopla.co.uk";
 
-const val CACHE_DIR = "responses-cache/"
-
-const val LISTINGS_CLASS = ".listing-results-price"
-const val PRICE_CLASS = ".ui-pricing__main-price"
-const val FLOOR_CLASS = ".ui-modal-floorplan__wrap"
-const val GALERY_CLASS = ".ui-modal-gallery__asset--center-content"
-const val SUMMARY_CLASS = ".dp-sidebar-wrapper__summary"
-const val ADDRESS_CLASS = ".ui-property-summary__address"
-
-fun makeGoodFilename(filename: String): String {
-    val bytes = (MessageDigest.getInstance("md5").digest(filename.toByteArray()))
-    return BigInteger(1, bytes).toString(16).padStart(32, '0')
-}
-
-fun sendQuery(url: String, useCache: Boolean = true): String? {
-    Logger.println("Send query $url, useCache = $useCache")
-    val fileCache = File(CACHE_DIR + makeGoodFilename(url))
-    if (useCache && fileCache.exists()) {
-        val cachedRes = fileCache.readText()
-        if (cachedRes.isEmpty()) {
-            return null;
-        }
-        return cachedRes;
-    }
-    return try {
-        val response = URL(url).readText()
-        fileCache.writeText(response)
-        response
-    } catch (e: IOException) {
-        fileCache.writeText("");
-        null;
-    }
-}
+private const val LISTINGS_CLASS = ".listing-results-price"
+private const val PRICE_CLASS = ".ui-pricing__main-price"
+private const val FLOOR_CLASS = ".ui-modal-floorplan__wrap"
+private const val GALERY_CLASS = ".ui-modal-gallery__asset--center-content"
+private const val SUMMARY_CLASS = ".dp-sidebar-wrapper__summary"
+private const val ADDRESS_CLASS = ".ui-property-summary__address"
 
 fun getPhotosLink(id: Int) = "https://www.zoopla.co.uk/to-rent/details/photos/$id"
 
-fun getIdFromLink(link: String): Int {
+private fun getIdFromLink(link: String): Int {
     return link.substring(link.lastIndexOf('/') + 1).toInt();
 }
 
@@ -62,7 +32,7 @@ fun parseMonthPrice(s: String): Int? {
     return s.substring(1).replace(",", "").split(' ').first().toInt()
 }
 
-object seen_properties : Table() {
+private object seen_properties : Table() {
     val id = integer("id")
 }
 
@@ -72,7 +42,7 @@ fun buildPropertyLink(id: Int): String {
 
 fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config): Property? {
     val link = buildPropertyLink(propertyId)
-    val propertyHTML = sendQuery(link)
+    val propertyHTML = Utils.sendQuery(link)
     if (propertyHTML == null) {
         Logger.println("Skip property, because can't download html")
         return null
@@ -93,7 +63,7 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config
     val regex = "background-image: url\\('(.*)'\\)".toRegex()
     val (floorPlanImage) = regex.find(floor)!!.destructured
     val areaSqM = FloorPlanOCR.loadImageAndParseSqM(config, URL(floorPlanImage))
-    val photosPage = sendQuery(getPhotosLink(propertyId))
+    val photosPage = Utils.sendQuery(getPhotosLink(propertyId))
     if (photosPage == null) {
         Logger.println("Skip property because can't get photos")
         return null
@@ -189,20 +159,27 @@ fun sendRequest(telegram: Telegram, config: Config) {
         )
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
-        val response = sendQuery(it.baseUrl + additionalParams, useCache = false)!!
+        val response = Utils.sendQuery(it.baseUrl + additionalParams, useCache = false)!!
         handleResponse(response, telegram, config, it)
     }
 }
 
-fun testmd5() {
-    System.err.println(makeGoodFilename("hello.html"));
-}
-
+@UnstableDefault
 fun main(args: Array<String>) {
 //    testParseProperty()
 //    testmd5()
-    val config = Config.parseFromFile(args[0])
-    val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
-    Logger.println("Start!")
-    sendRequest(telegram, config)
+    Logger.println(args.contentToString())
+    if (args[0].equals("test")) {
+        Logger.println("Testing env!")
+        val config = Config.parseFromFile(args[1])
+        val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
+        RightMove.getNewPropertiesAndSendUpdates(config, telegram)
+    } else {
+        val config = Config.parseFromFile(args[0])
+        val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
+        Logger.println("Start!")
+        sendRequest(telegram, config)
+        Logger.println("Check right move also!")
+        RightMove.getNewPropertiesAndSendUpdates(config, telegram)
+    }
 }
