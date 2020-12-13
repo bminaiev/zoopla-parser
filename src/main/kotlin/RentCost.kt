@@ -7,6 +7,6 @@ class RentCost(text: String) {
     }
 
     fun isOutOfRange(): Boolean {
-        return pricePoundsPerMonth > 3500 || pricePoundsPerMonth < 1500
+        return pricePoundsPerMonth > 2700 || pricePoundsPerMonth < 1500
     }
 }
