@@ -6,8 +6,8 @@ import org.jetbrains.exposed.sql.insert
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jsoup.Jsoup
-import java.net.URL
 
+import java.net.URL
 const val BASE_ADDRESS = "https://www.zoopla.co.uk";
 const val BASE_CDN = "https://lc.zoocdn.com/"
 
@@ -161,7 +161,10 @@ fun sendRequest(telegram: Telegram, config: Config) {
     )
     val allQueryParams =
         listOf(
-            queryParamsAngel
+            queryParamsAngel,
+            queryParamsKingsCross,
+            queryParamsHampstead,
+            queryNearHydePark
         )
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
