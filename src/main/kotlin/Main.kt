@@ -109,7 +109,11 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 
     val allProperties = links.mapNotNull { linkIt ->
         val propertyId = getIdFromLink(linkIt)
-        convertOneProperty(propertyId, queryParams, config)
+        try {
+            convertOneProperty(propertyId, queryParams, config)
+        } catch (e : Exception) {
+            null
+        }
     }
 
     Database.connect(
