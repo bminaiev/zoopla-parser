@@ -177,7 +177,7 @@ fun sendRequest(telegram: Telegram, config: Config) {
             queryParamsKingsCross,
             queryParamsHampstead,
             queryNearHydePark,
-            queryNearCanaryWharf,
+//            queryNearCanaryWharf,
             queryNearNottingHill
         )
     allQueryParams.forEach {
