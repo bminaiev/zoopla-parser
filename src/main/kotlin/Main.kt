@@ -8,6 +8,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import org.jsoup.Jsoup
 
 import java.net.URL
+
 const val BASE_ADDRESS = "https://www.zoopla.co.uk";
 const val BASE_CDN = "https://lc.zoocdn.com/"
 
@@ -58,7 +59,8 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config
     val address = Address(parsedHTML.select(ADDRESS_CLASS).text())
     val nextData = parsedHTML.selectFirst(NEXT_DATA_CLASS).html()
     val nextDataJson = Json.parseJson(nextData)
-    val curPropertyJson = nextDataJson.jsonObject.getObject("props").getObject("pageProps").getObject("data").getObject("listing")
+    val curPropertyJson =
+        nextDataJson.jsonObject.getObject("props").getObject("pageProps").getObject("data").getObject("listing")
     val floorPlan = curPropertyJson.getObject("floorPlan")
 
     val image = floorPlan["image"]
@@ -111,7 +113,7 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
         val propertyId = getIdFromLink(linkIt)
         try {
             convertOneProperty(propertyId, queryParams, config)
-        } catch (e : Exception) {
+        } catch (e: Exception) {
             null
         }
     }
@@ -171,6 +173,14 @@ fun sendRequest(telegram: Telegram, config: Config) {
         "$BASE_ADDRESS/to-rent/property/notting-hill/?q=Notting%20Hill&radius=1",
         "notting hill"
     )
+    val queryNearLiverpoolStreet = QueryParams(
+        "$BASE_ADDRESS/to-rent/property/liverpool-street/?q=Liverpool%20Street%2C%20London&radius=1",
+        "Liverpool Street"
+    )
+    val queryNearTowerBridge = QueryParams(
+        "$BASE_ADDRESS/to-rent/property/tower-bridge/?q=Tower%20Bridge%2C%20London&radius=1",
+        "Tower Bridge"
+    )
     val allQueryParams =
         listOf(
             queryParamsAngel,
@@ -178,7 +188,9 @@ fun sendRequest(telegram: Telegram, config: Config) {
             queryParamsHampstead,
             queryNearHydePark,
 //            queryNearCanaryWharf,
-            queryNearNottingHill
+            queryNearNottingHill,
+            queryNearLiverpoolStreet,
+            queryNearTowerBridge
         )
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
