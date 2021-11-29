@@ -199,6 +199,19 @@ fun sendRequest(telegram: Telegram, config: Config) {
     }
 }
 
+fun do_test(telegram: Telegram, config: Config) {
+    val propertyId = 60291257
+    val queryParams = QueryParams(
+        "test-url",
+        "test-tag"
+    )
+    val property = convertOneProperty(propertyId, queryParams, config)!!
+    Logger.println("converted!")
+    Logger.println("Want to send $property\n")
+    telegram.sendProperty(property)
+    Logger.println("Finished sending")
+}
+
 @UnstableDefault
 fun main(args: Array<String>) {
 //    testParseProperty()
@@ -208,7 +221,8 @@ fun main(args: Array<String>) {
         Logger.println("Testing env!")
         val config = Config.parseFromFile(args[1])
         val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
-        RightMove.getNewPropertiesAndSendUpdates(config, telegram)
+        do_test(telegram, config)
+//        RightMove.getNewPropertiesAndSendUpdates(config, telegram)
     } else {
         val config = Config.parseFromFile(args[0])
         val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
