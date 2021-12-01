@@ -141,7 +141,7 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 fun sendRequest(telegram: Telegram, config: Config) {
     val additionalParams =
         "&beds_max=2&page_size=100&include_shared_accommodation=false&price_frequency=per_month&results_sort=newest_listings&search_source=refine&added=24_hours"
-    val queryParamsNear = QueryParams(
+    val queryParamsFarringdon = QueryParams(
         "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?q=ec1m%205ny&radius=1",
         "near Farringdon"
     )
@@ -183,6 +183,7 @@ fun sendRequest(telegram: Telegram, config: Config) {
     )
     val allQueryParams =
         listOf(
+            queryParamsFarringdon,
             queryParamsAngel,
             queryParamsKingsCross,
             queryParamsHampstead,
@@ -220,12 +221,12 @@ fun main(args: Array<String>) {
     if (args[0].equals("test")) {
         Logger.println("Testing env!")
         val config = Config.parseFromFile(args[1])
-        val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
+        val telegram = Telegram(config.telegramAPIKey, config.users)
         do_test(telegram, config)
 //        RightMove.getNewPropertiesAndSendUpdates(config, telegram)
     } else {
         val config = Config.parseFromFile(args[0])
-        val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
+        val telegram = Telegram(config.telegramAPIKey, config.users)
         Logger.println("Start!")
         sendRequest(telegram, config)
         Logger.println("Check right move also!")

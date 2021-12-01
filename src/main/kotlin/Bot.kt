@@ -5,7 +5,7 @@ import java.util.concurrent.CompletionException
 
 const val TIME_TO_SLEEP = 60 * 1000L
 
-class Telegram(token: String, val chatIds: Array<Long>) {
+class Telegram(token: String, val users: Map<String, User>) {
     val bot = Bot.createPolling(username = "londonrent", token = token)
 
     val MAX_PHOTOS = 9
@@ -54,10 +54,18 @@ class Telegram(token: String, val chatIds: Array<Long>) {
             property.imgs
         ).take(MAX_PHOTOS) + directedByImg).map { bot.mediaPhoto(it) }
         Logger.println("total imsgs: " + imgs.size + ": " + imgs)
-        chatIds.forEach { chatId ->
-            tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE) }
-            tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs) }
-            tryTelegramAPIWithRetries { bot.sendMessage(chatId, message, parseMode = "html") }
+        users.forEach { entry ->
+            if (entry.value.tags.contains(property.searchTag.tag)) {
+                Logger.println("Send property to " + entry.key)
+                val chatId = entry.value.chatId
+                tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE) }
+                tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs) }
+                tryTelegramAPIWithRetries {
+                    bot.sendMessage(chatId, message, parseMode = "html")
+                }
+            } else {
+                Logger.println("Skip sending property to " + entry.key + " because of tag: " + property.searchTag.tag)
+            }
         }
     }
 }

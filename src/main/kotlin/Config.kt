@@ -4,8 +4,15 @@ import kotlinx.serialization.json.JsonConfiguration
 import java.io.File
 
 @Serializable
+data class User(
+    val chatId: Long,
+    val tags : Array<String>
+)
+
+@Serializable
 data class Config(
     val telegramChatIds: Array<Long>,
+    val users:Map<String, User>,
     val telegramAPIKey: String,
     val dbURL: String,
     val dbUser: String,

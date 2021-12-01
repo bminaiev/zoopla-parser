@@ -115,7 +115,7 @@ class FloorPlanOCR {
         }
 
         fun tooSmallArea(areaSqM: Double?): Boolean {
-            return areaSqM == null || areaSqM <= 55.0
+            return areaSqM == null || areaSqM <= 45.0
         }
     }
 

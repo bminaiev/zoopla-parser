@@ -153,8 +153,8 @@ class RightMove {
 @UnstableDefault
 fun main(args: Array<String>) {
     val config = Config.parseFromFile(args[0])
-    val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
-    RightMove.getNewPropertiesAndSendUpdates(config, telegram)
+//    val telegram = Telegram(config.telegramAPIKey, config.telegramChatIds)
+//    RightMove.getNewPropertiesAndSendUpdates(config, telegram)
 //    handleOneProperty(85423135, config)
 //    parseOneProperty(98025995, config)
     // TODO: Unit test later
