@@ -181,8 +181,9 @@ fun sendRequest(telegram: Telegram, config: Config) {
         "$BASE_ADDRESS/to-rent/property/tower-bridge/?q=Tower%20Bridge%2C%20London&radius=1",
         "Tower Bridge"
     )
+    // not vauxhall, but who cares?
     val queryNearVauxhall = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/london/vauxhall/?q=Vauxhall%2C%20London&radius=1",
+        "$BASE_ADDRESS/to-rent/property/station/tube/waterloo/?q=Waterloo%20Station%2C%20London&radius=1",
         "Vauxhall"
     )
     val allQueryParams =
