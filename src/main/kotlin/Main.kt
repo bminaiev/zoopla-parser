@@ -186,6 +186,10 @@ fun sendRequest(telegram: Telegram, config: Config) {
         "$BASE_ADDRESS/to-rent/property/station/tube/waterloo/?q=Waterloo%20Station%2C%20London&radius=1",
         "Vauxhall"
     )
+    val queryElephantAndCastle = QueryParams(
+        "$BASE_ADDRESS/to-rent/property/station/rail/elephant-and-castle-underground/?q=Elephant%20%26%20Castle%20(Underground)%20Station%2C%20London&radius=1",
+        "Elephant&Castle"
+    )
     val allQueryParams =
         listOf(
             queryParamsFarringdon,
@@ -197,7 +201,8 @@ fun sendRequest(telegram: Telegram, config: Config) {
             queryNearNottingHill,
             queryNearLiverpoolStreet,
             queryNearTowerBridge,
-            queryNearVauxhall
+            queryNearVauxhall,
+            queryElephantAndCastle
         )
     allQueryParams.forEach {
         Logger.println("Handle query with tag = " + it.tag)
