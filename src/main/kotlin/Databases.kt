@@ -47,8 +47,7 @@ class Databases {
         const val ANTON = "Anton"
         const val SOFIA = "Sofia"
 
-        // TODO: remove SeenProperties
-        private val tablesToRecreate = arrayOf(SeenPropertiesTable, QueryParamsTable, UsersTable, SubscriptionsTable)
+        private val tablesToRecreate = arrayOf(QueryParamsTable, UsersTable, SubscriptionsTable)
 
         fun createTables() {
             SchemaUtils.create(*tablesToRecreate)
