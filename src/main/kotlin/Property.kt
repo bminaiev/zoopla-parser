@@ -5,7 +5,6 @@ data class Property(
     val floorPlanImage: String,
     val address: Address,
     val id: Int,
-    val searchTag: QueryParams,
     val areaSqM: Double?
 ) {
     companion object {

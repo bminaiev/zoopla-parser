@@ -44,28 +44,22 @@ class Telegram(token: String, val users: Map<String, User>) {
         throw AssertionError("Too much tries to send message")
     }
 
-    fun sendProperty(property: Property) {
+    fun sendProperty(property: Property, chatId: Long, searchTag: String) {
         val hasExtraPhotos = if (property.imgs.size > MAX_PHOTOS) "(more photos available)\n" else ""
         val message =
-            property.costPerMonth.toString() + property.link + "\n" + property.address + property.searchTag +
+            property.costPerMonth.toString() + property.link + "\n" + property.address +
+                    "<b>tag</b>: " + searchTag + "\n" +
                     FloorPlanOCR.convertToString(property.areaSqM) + hasExtraPhotos
         val imgs = (joinImages(
             property.floorPlanImage,
             property.imgs
         ).take(MAX_PHOTOS) + directedByImg).map { bot.mediaPhoto(it) }
         Logger.println("total imsgs: " + imgs.size + ": " + imgs)
-        users.forEach { entry ->
-            if (entry.value.tags.contains(property.searchTag.tag)) {
-                Logger.println("Send property to " + entry.key)
-                val chatId = entry.value.chatId
-                tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE) }
-                tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs) }
-                tryTelegramAPIWithRetries {
-                    bot.sendMessage(chatId, message, parseMode = "html")
-                }
-            } else {
-                Logger.println("Skip sending property to " + entry.key + " because of tag: " + property.searchTag.tag)
-            }
+
+        tryTelegramAPIWithRetries { bot.sendMessage(chatId, DELIMITER_MESSAGE) }
+        tryTelegramAPIWithRetries { bot.sendMediaGroup(chatId, imgs) }
+        tryTelegramAPIWithRetries {
+            bot.sendMessage(chatId, message, parseMode = "html")
         }
     }
 }

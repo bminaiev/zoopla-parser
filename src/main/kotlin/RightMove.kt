@@ -72,7 +72,6 @@ class RightMove {
                 dataModel.floorPlanURL,
                 dataModel.address,
                 dataModel.id,
-                searchTag,
                 areaSqM
             )
         }
@@ -126,7 +125,7 @@ class RightMove {
                         seen_properties_right_move.select { seen_properties_right_move.id eq propertyId }.toList()
                     if (inDB.isEmpty()) {
                         Logger.println("Want to send $property\n")
-                        telegram.sendProperty(property)
+                        telegram.sendProperty(property, 0, "")
                         seen_properties_right_move.insert { it[id] = propertyId }
                     } else {
                         Logger.println("Skip sending $propertyId because already done it (based on database)\n")

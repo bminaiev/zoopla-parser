@@ -31,19 +31,11 @@ fun parseMonthPrice(s: String): Int? {
     return s.substring(1).replace(",", "").split(' ').first().toInt()
 }
 
-private object seen_properties : Table() {
-    val id = integer("id")
-}
-
-private object skipped_properties : Table() {
-    val id = integer("id")
-}
-
 fun buildPropertyLink(id: Int): String {
     return "https://www.zoopla.co.uk/to-rent/details/$id/"
 }
 
-fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config): Property? {
+fun convertOneProperty(propertyId: Int, config: Config): Property? {
     val link = buildPropertyLink(propertyId)
     val propertyHTML = Utils.sendQuery(link)
     if (propertyHTML == null) {
@@ -95,12 +87,17 @@ fun convertOneProperty(propertyId: Int, queryParams: QueryParams, config: Config
         floorPlanImage,
         address,
         propertyId,
-        queryParams,
         areaSqM
     )
 }
 
-fun handleResponse(response: String, telegram: Telegram, config: Config, queryParams: QueryParams) {
+fun handleResponse(
+    response: String,
+    telegram: Telegram,
+    config: Config,
+    queryParams: ResultRow,
+    users: List<ResultRow>
+) {
     val parsed = Jsoup.parse(response);
     val properties = parsed.select(LISTINGS_CLASS)
 
@@ -110,14 +107,6 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 
     Logger.println("total " + links.size + " properties!")
 
-    Database.connect(
-        config.dbURL, driver = "org.postgresql.Driver",
-        user = config.dbUser, password = config.dbPassword
-    )
-
-    transaction {
-        SchemaUtils.create(skipped_properties, seen_properties)
-    }
 
     val allProperties = links.mapNotNull { linkIt ->
         val propertyId = getIdFromLink(linkIt)
@@ -125,7 +114,7 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
             val inDB = skipped_properties.select { skipped_properties.id eq propertyId }.toList()
             if (inDB.isEmpty()) {
                 val result = try {
-                    convertOneProperty(propertyId, queryParams, config)
+                    convertOneProperty(propertyId, config)
                 } catch (e: Exception) {
                     null
                 }
@@ -143,90 +132,64 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
     }
 
     allProperties.forEach { property ->
+        // TODO: work better with global options
+        if (property.costPerMonth.pricePoundsPerMonth < (queryParams[QueryParamsTable.minPrice] ?: 0)) {
+            return@forEach
+        }
+        if (property.costPerMonth.pricePoundsPerMonth > (queryParams[QueryParamsTable.maxPrice] ?: Int.MAX_VALUE)) {
+            return@forEach
+        }
         val propertyId = property.id
-        transaction {
-            val inDB = seen_properties.select { seen_properties.id eq propertyId }.toList()
-            if (inDB.isEmpty()) {
-                Logger.println("Want to send $property\n")
-                telegram.sendProperty(property)
-                seen_properties.insert { it[id] = propertyId }
-            } else {
-                Logger.println("Skip sending $propertyId because already done it (based on database)\n")
+        users.forEach { user ->
+            val userName = user[UsersTable.name]
+            val chatId = user[UsersTable.chatId]
+            transaction {
+                val inDB =
+                    SeenPropertiesTable.select { (SeenPropertiesTable.id eq propertyId) and (SeenPropertiesTable.user_name eq userName) }
+                        .toList()
+                if (inDB.isEmpty()) {
+                    Logger.println("Want to send $property to $chatId ($userName)")
+                    telegram.sendProperty(property, chatId, queryParams[QueryParamsTable.tag])
+                    SeenPropertiesTable.insert {
+                        it[id] = propertyId
+                        it[user_name] = userName
+                    }
+                } else {
+                    Logger.println("Skip sending $propertyId because already done it (based on database)")
+                }
             }
         }
     }
 }
 
 fun sendRequest(telegram: Telegram, config: Config) {
+    Database.connect(
+        config.dbURL, driver = "org.postgresql.Driver",
+        user = config.dbUser, password = config.dbPassword
+    )
+
+    Databases.reinitialize()
+
+    val queryParams = transaction { QueryParamsTable.selectAll().toList() }
+
     val additionalParams =
         "&beds_max=2&page_size=100&include_shared_accommodation=false&price_frequency=per_month&results_sort=newest_listings&search_source=refine&added=24_hours"
-    val queryParamsFarringdon = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/london/britton-street/ec1m-5ny/?q=ec1m%205ny&radius=1",
-        "near Farringdon"
-    )
-    val queryParamsAngel = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/angel/?q=Angel%2C%20London&radius=1",
-        "near Angel"
-    )
-    val queryParamsKingsCross = QueryParams(
-        BASE_ADDRESS + "/to-rent/property/london/kings-cross/?q=Kings%20Cross%2C%20London&radius=1",
-        "near Kings Cross"
-    )
-    val queryParamsFacebook = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/tottenham-court-road/?q=Tottenham%20Court%20Road%20Station%2C%20London&radius=1",
-        "near FB office"
-    )
-    val queryParamsHampstead = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/hampstead/?q=Hampstead%20Station%2C%20London&radius=1",
-        "hampstead"
-    )
-    val queryNearHydePark = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/sloane-square/?q=Sloane%20Square%20Station%2C%20London&radius=1",
-        "hyde park"
-    )
-    val queryNearCanaryWharf = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/canary-wharf/?q=Canary%20Wharf%20Station%2C%20London&radius=1",
-        "canary wharf"
-    )
-    val queryNearNottingHill = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/notting-hill/?q=Notting%20Hill&radius=1",
-        "notting hill"
-    )
-    val queryNearLiverpoolStreet = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/liverpool-street/?q=Liverpool%20Street%2C%20London&radius=1",
-        "Liverpool Street"
-    )
-    val queryNearTowerBridge = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/tower-bridge/?q=Tower%20Bridge%2C%20London&radius=1",
-        "Tower Bridge"
-    )
-    // not vauxhall, but who cares?
-    val queryNearVauxhall = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/tube/waterloo/?q=Waterloo%20Station%2C%20London&radius=1",
-        "Vauxhall"
-    )
-    val queryElephantAndCastle = QueryParams(
-        "$BASE_ADDRESS/to-rent/property/station/rail/elephant-and-castle-underground/?q=Elephant%20%26%20Castle%20(Underground)%20Station%2C%20London&radius=1",
-        "Elephant&Castle"
-    )
-    val allQueryParams =
-        listOf(
-            queryParamsFarringdon,
-            queryParamsAngel,
-            queryParamsKingsCross,
-            queryParamsHampstead,
-            queryNearHydePark,
-//            queryNearCanaryWharf,
-            queryNearNottingHill,
-            queryNearLiverpoolStreet,
-            queryNearTowerBridge,
-            queryNearVauxhall,
-            queryElephantAndCastle
-        )
-    allQueryParams.forEach {
-        Logger.println("Handle query with tag = " + it.tag)
-        val response = Utils.sendQuery(it.baseUrl + additionalParams, useCache = false)!!
-        handleResponse(response, telegram, config, it)
+
+    queryParams.forEach { queryParam ->
+        val queryParamId = queryParam[QueryParamsTable.id]
+        val users = transaction {
+            (SubscriptionsTable innerJoin UsersTable).slice(UsersTable.name, UsersTable.chatId)
+                .select { (SubscriptionsTable.queryParamsId eq queryParamId) and (SubscriptionsTable.userName eq UsersTable.name) }
+                .toList()
+        }
+
+        Logger.println("users: ${users}, query : $queryParam")
+        if (users.isEmpty()) {
+            return@forEach
+        }
+        val url = BASE_ADDRESS + queryParam[QueryParamsTable.queryUrl] + additionalParams
+        val response = Utils.sendQuery(url, useCache = false)!!
+        handleResponse(response, telegram, config, queryParam, users)
     }
 }
 
@@ -236,10 +199,11 @@ fun do_test(telegram: Telegram, config: Config) {
         "test-url",
         "test-tag"
     )
-    val property = convertOneProperty(propertyId, queryParams, config)!!
+    val property = convertOneProperty(propertyId, config)!!
     Logger.println("converted!")
     Logger.println("Want to send $property\n")
-    telegram.sendProperty(property)
+    val chatId = config.users["Borys"]!!.chatId
+    telegram.sendProperty(property, chatId, "test-tag")
     Logger.println("Finished sending")
 }
 
