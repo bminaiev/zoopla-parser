@@ -1,9 +1,6 @@
 import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.Table
-import org.jetbrains.exposed.sql.insert
-import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.jsoup.Jsoup
 
@@ -35,6 +32,10 @@ fun parseMonthPrice(s: String): Int? {
 }
 
 private object seen_properties : Table() {
+    val id = integer("id")
+}
+
+private object skipped_properties : Table() {
     val id = integer("id")
 }
 
@@ -109,19 +110,38 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
 
     Logger.println("total " + links.size + " properties!")
 
-    val allProperties = links.mapNotNull { linkIt ->
-        val propertyId = getIdFromLink(linkIt)
-        try {
-            convertOneProperty(propertyId, queryParams, config)
-        } catch (e: Exception) {
-            null
-        }
-    }
-
     Database.connect(
         config.dbURL, driver = "org.postgresql.Driver",
         user = config.dbUser, password = config.dbPassword
     )
+
+    transaction {
+        SchemaUtils.create(skipped_properties, seen_properties)
+    }
+
+    val allProperties = links.mapNotNull { linkIt ->
+        val propertyId = getIdFromLink(linkIt)
+        transaction {
+            val inDB = skipped_properties.select { skipped_properties.id eq propertyId }.toList()
+            if (inDB.isEmpty()) {
+                val result = try {
+                    convertOneProperty(propertyId, queryParams, config)
+                } catch (e: Exception) {
+                    null
+                }
+                if (result == null) {
+                    Logger.println("Will not check property $propertyId any more, save it to database")
+                    skipped_properties.insert { it[id] = propertyId }
+                }
+                seen_properties.insert { it[id] = propertyId }
+                result
+            } else {
+                Logger.println("Skip checking $propertyId because already done it (based on database)\n")
+                null
+            }
+        }
+
+    }
 
     allProperties.forEach { property ->
         val propertyId = property.id
