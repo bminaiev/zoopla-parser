@@ -133,7 +133,6 @@ fun handleResponse(response: String, telegram: Telegram, config: Config, queryPa
                     Logger.println("Will not check property $propertyId any more, save it to database")
                     skipped_properties.insert { it[id] = propertyId }
                 }
-                seen_properties.insert { it[id] = propertyId }
                 result
             } else {
                 Logger.println("Skip checking $propertyId because already done it (based on database)\n")
