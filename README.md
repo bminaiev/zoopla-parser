@@ -23,6 +23,9 @@ CREATE TABLE public.seen_properties (
 CREATE TABLE public.seen_properties_right_move (
     id integer NOT NULL
 );
+CREATE TABLE public.skipped_properties (
+    id integer NOT NULL
+);
 ```
 
 Also you need to download eng tessdata (probably this one -- https://github.com/tesseract-ocr/tessdata/blob/master/eng.traineddata) 
