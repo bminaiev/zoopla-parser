@@ -9,9 +9,6 @@ data class Property(
 ) {
     companion object {
         fun existReasonToSkip(property: Property): String? {
-            if (property.costPerMonth.isOutOfRange()) {
-                return "Skip property because of price ${property.costPerMonth}"
-            }
             if (property.areaSqM == null) {
                 return "Skip propery because can't compute area"
             }
