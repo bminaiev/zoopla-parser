@@ -6,8 +6,9 @@ class RentCost(text: String) {
         return pricePoundsPerMonth.toString() + "£\n";
     }
 
-    // TODO: remove this function?
-    fun isOutOfRange(): Boolean {
-        return pricePoundsPerMonth > 8000 || pricePoundsPerMonth < 1500
+    companion object {
+        const val DEFAULT_MIN_PRICE = 1500
+        const val DEFAULT_MAX_PRICE = 4000
     }
+
 }

@@ -45,10 +45,6 @@ fun convertOneProperty(propertyId: Int, config: Config): Property? {
     val parsedHTML = Jsoup.parse(propertyHTML)
     val priceStr = parsedHTML.selectFirst(PRICE_CLASS).text()
     val pricePoundsPerMonth = RentCost(priceStr)
-    if (pricePoundsPerMonth.isOutOfRange()) {
-        Logger.println("Skip property because of price $pricePoundsPerMonth")
-        return null
-    }
     val address = Address(parsedHTML.select(ADDRESS_CLASS).text())
     val nextData = parsedHTML.selectFirst(NEXT_DATA_CLASS).html()
     val nextDataJson = Json.parseJson(nextData)
@@ -132,11 +128,10 @@ fun handleResponse(
     }
 
     allProperties.forEach { property ->
-        // TODO: work better with global options
-        if (property.costPerMonth.pricePoundsPerMonth < (queryParams[QueryParamsTable.minPrice] ?: 0)) {
+        if (property.costPerMonth.pricePoundsPerMonth < (queryParams[QueryParamsTable.minPrice] ?: RentCost.DEFAULT_MIN_PRICE)) {
             return@forEach
         }
-        if (property.costPerMonth.pricePoundsPerMonth > (queryParams[QueryParamsTable.maxPrice] ?: Int.MAX_VALUE)) {
+        if (property.costPerMonth.pricePoundsPerMonth > (queryParams[QueryParamsTable.maxPrice] ?: RentCost.DEFAULT_MAX_PRICE)) {
             return@forEach
         }
         val propertyId = property.id

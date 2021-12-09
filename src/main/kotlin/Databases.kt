@@ -111,6 +111,8 @@ class Databases {
         private fun insertAngel() {
             val id = QueryParamsTable.insert {
                 it[tag] = "Angel"
+                it[minPrice] = 2000
+                it[maxPrice] = 8000
                 it[queryUrl] = "/to-rent/property/angel/?q=Angel%2C%20London&radius=1"
             }[QueryParamsTable.id]
 
@@ -131,6 +133,8 @@ class Databases {
         private fun insertKingsCross() {
             val id = QueryParamsTable.insert {
                 it[tag] = "Kings Cross"
+                it[minPrice] = 2000
+                it[maxPrice] = 8000
                 it[queryUrl] = "/to-rent/property/london/kings-cross/?q=Kings%20Cross%2C%20London&radius=1"
             }[QueryParamsTable.id]
 
@@ -147,6 +151,8 @@ class Databases {
         private fun insertLiverpoolStreet() {
             val id = QueryParamsTable.insert {
                 it[tag] = "Liverpool Street"
+                it[minPrice] = 2000
+                it[maxPrice] = 8000
                 it[queryUrl] = "/to-rent/property/liverpool-street/?q=Liverpool%20Street%2C%20London&radius=1"
             }[QueryParamsTable.id]
 
@@ -163,6 +169,8 @@ class Databases {
         private fun insertTowerBridge() {
             val id = QueryParamsTable.insert {
                 it[tag] = "Tower Bridge"
+                it[minPrice] = 2000
+                it[maxPrice] = 8000
                 it[queryUrl] = "/to-rent/property/tower-bridge/?q=Tower%20Bridge%2C%20London&radius=1"
             }[QueryParamsTable.id]
 
@@ -183,10 +191,6 @@ class Databases {
             }[QueryParamsTable.id]
 
             SubscriptionsTable.insert {
-                it[userName] = BORYS
-                it[queryParamsId] = id
-            }
-            SubscriptionsTable.insert {
                 it[userName] = ANTON
                 it[queryParamsId] = id
             }
@@ -199,10 +203,6 @@ class Databases {
                     "/to-rent/property/station/rail/elephant-and-castle-underground/?q=Elephant%20%26%20Castle%20(Underground)%20Station%2C%20London&radius=1"
             }[QueryParamsTable.id]
 
-            SubscriptionsTable.insert {
-                it[userName] = BORYS
-                it[queryParamsId] = id
-            }
             SubscriptionsTable.insert {
                 it[userName] = ANTON
                 it[queryParamsId] = id
