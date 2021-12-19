@@ -212,7 +212,7 @@ fun do_test(telegram: Telegram, config: Config) {
 fun main(args: Array<String>) {
 //    testParseProperty()
 //    testmd5()
-    val checkPropertiesEvenInDB = args.contains("--check-properties-in-db")
+    val checkPropertiesEvenInDB = args.contains("-check-properties-in-db")
 
     Logger.println("check properties in db: $checkPropertiesEvenInDB")
     Logger.println(args.contentToString())

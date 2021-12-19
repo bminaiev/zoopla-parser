@@ -2,4 +2,4 @@
 
 BASEDIR=$(dirname "$0")
 cd $BASEDIR
-gradle run --args config-new.txt --check-properties-in-db
+gradle run --args config-new.txt -check-properties-in-db
