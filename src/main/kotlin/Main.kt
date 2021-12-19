@@ -49,7 +49,7 @@ fun convertOneProperty(propertyId: Int, config: Config): Property? {
     val nextData = parsedHTML.selectFirst(NEXT_DATA_CLASS).html()
     val nextDataJson = Json.parseJson(nextData)
     val curPropertyJson =
-        nextDataJson.jsonObject.getObject("props").getObject("pageProps").getObject("data").getObject("listing")
+        nextDataJson.jsonObject.getObject("props").getObject("pageProps").getObject("listingDetails")
     val floorPlan = curPropertyJson.getObject("floorPlan")
 
     val image = floorPlan["image"]
@@ -92,7 +92,8 @@ fun handleResponse(
     telegram: Telegram,
     config: Config,
     queryParams: ResultRow,
-    users: List<ResultRow>
+    users: List<ResultRow>,
+    checkPropertiesEvenInDB: Boolean
 ) {
     val parsed = Jsoup.parse(response);
     val properties = parsed.select(LISTINGS_CLASS)
@@ -108,15 +109,16 @@ fun handleResponse(
         val propertyId = getIdFromLink(linkIt)
         transaction {
             val inDB = skipped_properties.select { skipped_properties.id eq propertyId }.toList()
-            if (inDB.isEmpty()) {
+            if (inDB.isEmpty() || checkPropertiesEvenInDB) {
                 val result = try {
                     convertOneProperty(propertyId, config)
                 } catch (e: Exception) {
+                    Logger.println("Exception while checking property $propertyId: $e")
                     null
                 }
                 if (result == null) {
                     Logger.println("Will not check property $propertyId any more, save it to database")
-                    skipped_properties.insert { it[id] = propertyId }
+                    skipped_properties.insertIgnore { it[id] = propertyId }
                 }
                 result
             } else {
@@ -128,10 +130,14 @@ fun handleResponse(
     }
 
     allProperties.forEach { property ->
-        if (property.costPerMonth.pricePoundsPerMonth < (queryParams[QueryParamsTable.minPrice] ?: RentCost.DEFAULT_MIN_PRICE)) {
+        if (property.costPerMonth.pricePoundsPerMonth < (queryParams[QueryParamsTable.minPrice]
+                ?: RentCost.DEFAULT_MIN_PRICE)
+        ) {
             return@forEach
         }
-        if (property.costPerMonth.pricePoundsPerMonth > (queryParams[QueryParamsTable.maxPrice] ?: RentCost.DEFAULT_MAX_PRICE)) {
+        if (property.costPerMonth.pricePoundsPerMonth > (queryParams[QueryParamsTable.maxPrice]
+                ?: RentCost.DEFAULT_MAX_PRICE)
+        ) {
             return@forEach
         }
         val propertyId = property.id
@@ -157,7 +163,7 @@ fun handleResponse(
     }
 }
 
-fun sendRequest(telegram: Telegram, config: Config) {
+fun sendRequest(telegram: Telegram, config: Config, checkPropertiesEvenInDB: Boolean) {
     Database.connect(
         config.dbURL, driver = "org.postgresql.Driver",
         user = config.dbUser, password = config.dbPassword
@@ -184,12 +190,12 @@ fun sendRequest(telegram: Telegram, config: Config) {
         }
         val url = BASE_ADDRESS + queryParam[QueryParamsTable.queryUrl] + additionalParams
         val response = Utils.sendQuery(url, useCache = false)!!
-        handleResponse(response, telegram, config, queryParam, users)
+        handleResponse(response, telegram, config, queryParam, users, checkPropertiesEvenInDB)
     }
 }
 
 fun do_test(telegram: Telegram, config: Config) {
-    val propertyId = 60291257
+    val propertyId = 60395544
     val queryParams = QueryParams(
         "test-url",
         "test-tag"
@@ -206,6 +212,9 @@ fun do_test(telegram: Telegram, config: Config) {
 fun main(args: Array<String>) {
 //    testParseProperty()
 //    testmd5()
+    val checkPropertiesEvenInDB = args.contains("--check-properties-in-db")
+
+    Logger.println("check properties in db: $checkPropertiesEvenInDB")
     Logger.println(args.contentToString())
     if (args[0].equals("test")) {
         Logger.println("Testing env!")
@@ -217,7 +226,7 @@ fun main(args: Array<String>) {
         val config = Config.parseFromFile(args[0])
         val telegram = Telegram(config.telegramAPIKey, config.users)
         Logger.println("Start!")
-        sendRequest(telegram, config)
+        sendRequest(telegram, config, checkPropertiesEvenInDB)
         Logger.println("Check right move also!")
         // TODO: fix parsing here...
 //        RightMove.getNewPropertiesAndSendUpdates(config, telegram)
