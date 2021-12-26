@@ -166,6 +166,20 @@ class Databases {
             }
         }
 
+        private fun insertEdgwareRoad() {
+            val id = QueryParamsTable.insert {
+                it[tag] = "Edgware Road"
+                it[minPrice] = 2000
+                it[maxPrice] = 4000
+                it[queryUrl] = "/to-rent/property/station/tube/edgware-road-bakerloo/?q=Edgware%20Road%20Bakerloo%20Station%2C%20London&radius=1"
+            }[QueryParamsTable.id]
+
+            SubscriptionsTable.insert {
+                it[userName] = BORYS
+                it[queryParamsId] = id
+            }
+        }
+
         private fun insertTowerBridge() {
             val id = QueryParamsTable.insert {
                 it[tag] = "Tower Bridge"
@@ -218,6 +232,7 @@ class Databases {
             insertTowerBridge()
             insertVauxhall()
             insertElephantAndCastle()
+            insertEdgwareRoad()
         }
 
         private fun insertDefaultValues() {
