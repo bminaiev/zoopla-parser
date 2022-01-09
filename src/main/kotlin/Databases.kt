@@ -171,7 +171,8 @@ class Databases {
                 it[tag] = "Edgware Road"
                 it[minPrice] = 2000
                 it[maxPrice] = 4000
-                it[queryUrl] = "/to-rent/property/station/tube/edgware-road-bakerloo/?q=Edgware%20Road%20Bakerloo%20Station%2C%20London&radius=1"
+                it[queryUrl] =
+                    "/to-rent/property/station/tube/edgware-road-bakerloo/?q=Edgware%20Road%20Bakerloo%20Station%2C%20London&radius=1"
             }[QueryParamsTable.id]
 
             SubscriptionsTable.insert {
@@ -223,6 +224,40 @@ class Databases {
             }
         }
 
+        private fun insertCamden() {
+            val id = QueryParamsTable.insert {
+                it[tag] = "Camden"
+                it[queryUrl] =
+                    "/to-rent/property/camden-london-borough/?q=Camden%20(London%20Borough)%2C%20London"
+            }[QueryParamsTable.id]
+
+            SubscriptionsTable.insert {
+                it[userName] = BORYS
+                it[queryParamsId] = id
+            }
+            SubscriptionsTable.insert {
+                it[userName] = ANTON
+                it[queryParamsId] = id
+            }
+        }
+
+        private fun insertBlackfriars() {
+            val id = QueryParamsTable.insert {
+                it[tag] = "Blackfriars"
+                it[queryUrl] =
+                    "/to-rent/property/blackfriars/?q=Blackfriars%2C%20London&radius=0.5"
+            }[QueryParamsTable.id]
+
+            SubscriptionsTable.insert {
+                it[userName] = BORYS
+                it[queryParamsId] = id
+            }
+            SubscriptionsTable.insert {
+                it[userName] = ANTON
+                it[queryParamsId] = id
+            }
+        }
+
         private fun insertQueryParams() {
             insertLondonBridge()
             insertFarringdon()
@@ -233,6 +268,8 @@ class Databases {
             insertVauxhall()
             insertElephantAndCastle()
             insertEdgwareRoad()
+            insertCamden()
+            insertBlackfriars()
         }
 
         private fun insertDefaultValues() {
